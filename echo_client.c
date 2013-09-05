@@ -5,10 +5,11 @@
 int main(int argc,char* argv[])
 {
     int sockfd,n;
-    char recvline[MAXLINE + 1];
+    char recvline[MAXLINE+1];
     struct sockaddr_in servaddr;
+    char buf[MAXLINE];
 
-    if (argc != 3)
+    if (argc != 2)
     {
         err_quit("Usage: daytime_client <IPAdress> <message>");
     }
@@ -31,23 +32,46 @@ int main(int argc,char* argv[])
         err_sys("connect error");
     }
 
-    if ( (n = write(sockfd,argv[2],strlen(argv[2])+1)) < 0 )
-    {
-        err_sys("send msg fail");
-    }
+    struct sigaction alarm_act,ignore_act;
+    alarm_act.sa_flags = SA_RESTART;
+    alarm_act.sa_handler = timeout;
+    sigemptyset(&alarm_act.sa_mask);
+    sigaddset(&alarm_act.sa_mask,SIGQUIT);
 
-    while ( (n = read(sockfd,recvline,MAXLINE)) > 0)
+    ignore_act.sa_flags = SA_RESTART;
+    ignore_act.sa_handler = SIG_IGN;
+    sigemptyset(&ignore_act.sa_mask);
+    //sigaddset(&ignore_act.sa_mask,SIGQUIT);
+
+    int readn;
+    while (1)
     {
-        recvline[n]='\0';
-        if (fputs(recvline,stdout) == EOF)
+        fputs(">>",stdout);
+        sigaction(SIGALRM,&alarm_act,NULL);
+        alarm(10);
+        readn=readline(stdin,buf,MAXLINE);
+        sigaction(SIGALRM,&ignore_act,NULL);
+
+        if ( (n = write(sockfd,buf,(size_t)readn)) < 0 )
         {
-            err_sys("fputs error");
+            err_sys("send msg fail");
         }
-    }
 
-    if (n < 0)
-    {
-        err_sys("read error");
+        memset(buf,0,MAXLINE);
+        while ( (n = read(sockfd,recvline,MAXLINE)) > 0)
+        {
+            recvline[n]='\0';
+            if (fputs(recvline,stdout) == EOF)
+            {
+                err_sys("fputs error");
+            }
+        }
+
+        if (n < 0)
+        {
+            err_sys("read error");
+        }
+        memset(recvline,0,MAXLINE+1);
     }
 
     return 0;
