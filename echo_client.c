@@ -14,7 +14,7 @@ int main(int argc,char* argv[])
         err_quit("Usage: daytime_client <IPAdress> <message>");
     }
 
-    if ((sockfd = socket(AF_INET,SOCK_STREAM | SOCK_CLOEXEC,0)) < 0)
+    if ((sockfd = socket(AF_INET,SOCK_STREAM,0)) < 0)
     {
         err_quit("create socket err");
     }
