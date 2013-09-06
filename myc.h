@@ -11,10 +11,11 @@
 #include <time.h>
 #include <signal.h>
 #include <fcntl.h>
+#include <sys/select.h>
+#include <pthread.h>
 
 #define MAXLINE 1000
 #define LISTEN_QUEUE 5
-#define SA "const sockaddr"
 
 void err_quit(char* str)
 {

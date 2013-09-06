@@ -3,30 +3,60 @@
 
 int main(int argc,char* argv[])
 {
-    int listen_fd,conn_fd;
-    int n;
+    int listen_fd,n;
     struct sockaddr_in servaddr,cliaddr;
     char buf[MAXLINE];
     char addr[MAXLINE];
     socklen_t cliaddr_len;
-
     time_t ticks;
+    fd_set rfds,wfds,allfds;
+    struct timeval timeout;
 
-    if ((listen_fd = socket(AF_INET,SOCK_STREAM,0)) < 0)
-        err_sys("create socket");
+    timeout.tv_sec = 5;
+    timeout.tv_usec = 0;
     memset(&cliaddr,0,sizeof(cliaddr));
     memset(buf,0,MAXLINE);
     memset(addr,0,MAXLINE);
+
     servaddr.sin_family=AF_INET;
     servaddr.sin_port=htons(3789);
-    inet_pton(AF_INET,"127.0.0.1",&servaddr.sin_addr);
+    if( inet_pton(AF_INET,"127.0.0.1",&servaddr.sin_addr) <= 0)
+        err_quit ("inet_pton");
+
+    if ((listen_fd = socket(AF_INET,SOCK_STREAM,0)) < 0)
+        err_sys("create socket");
 
     if (bind(listen_fd,(struct sockaddr *)&servaddr,sizeof(servaddr)) < 0)
         err_sys("bind");
 
     if (listen(listen_fd,LISTEN_QUEUE) < 0)
         err_sys("listen");
-    while (1)
+
+    while(1)
+    {
+        int conn_fd;
+        if ((conn_fd = accept(listen_fd,(struct sockaddr *)&cliaddr,&cliaddr_len)) < 0)
+        {
+            perror ("accept");
+            continue;
+        }
+        FD_SET(conn_fd,&allfds);
+        FD_ZERO(&rfds);
+        FD_ZERO(&wfds);
+        rfds=allfds;
+        wfds=allfds;
+        int ready;
+        if( (ready = select(0,&rfds,&wfds,NULL,&timeout)) < 0)
+            err_sys ("select");
+        else if (ready  == 0)
+            printf("timeout,no read or write");
+        else
+        {
+            exit(1);
+        }
+
+    }
+    /*while (1)
     {
         if ((conn_fd = accept(listen_fd,(struct sockaddr *)&cliaddr,&cliaddr_len)) < 0)
             err_sys("accept");
@@ -81,5 +111,6 @@ int main(int argc,char* argv[])
             printf("fork pid %d \n",pid);
             close(conn_fd);
         }
-    }
+    }*/
+
 }
