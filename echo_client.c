@@ -32,33 +32,26 @@ int main(int argc,char* argv[])
         err_sys("connect error");
     }
 
-    struct sigaction alarm_act,ignore_act;
-    alarm_act.sa_flags = SA_RESTART;
-    alarm_act.sa_handler = timeout;
-    sigemptyset(&alarm_act.sa_mask);
-    sigaddset(&alarm_act.sa_mask,SIGQUIT);
-
-    ignore_act.sa_flags = SA_RESTART;
-    ignore_act.sa_handler = SIG_IGN;
-    sigemptyset(&ignore_act.sa_mask);
-    //sigaddset(&ignore_act.sa_mask,SIGQUIT);
-
-    int readn;
+    fcntl(sockfd,F_SETFL,fcntl(sockfd,F_GETFL) | O_NONBLOCK);
     while (1)
     {
         fputs(">>",stdout);
-        sigaction(SIGALRM,&alarm_act,NULL);
-        alarm(10);
-        readn=readline(stdin,buf,MAXLINE);
-        sigaction(SIGALRM,&ignore_act,NULL);
-
-        if ( (n = write(sockfd,buf,(size_t)readn)) < 0 )
+        int readn=readline(stdin,buf,MAXLINE);
+        writeAgain:
+        if ( (n = write(sockfd,buf,(size_t)readn)) < 0 && errno != EAGAIN)
         {
             err_sys("send msg fail");
         }
+        else if (n < 0 && errno == EAGAIN)
+        {
+            printf("wait second \n");
+            sleep(1);
+            goto writeAgain;
+        }
 
         memset(buf,0,MAXLINE);
-        while ( (n = read(sockfd,recvline,MAXLINE)) > 0)
+        readAgain:
+        if( (n = read(sockfd,recvline,MAXLINE)) > 0)
         {
             recvline[n]='\0';
             if (fputs(recvline,stdout) == EOF)
@@ -67,12 +60,18 @@ int main(int argc,char* argv[])
             }
         }
 
-        if (n < 0)
+        if (n < 0 && errno == EAGAIN)
+        {
+            sleep(1);
+            goto readAgain;
+        }
+        else if (n<0 && errno != EAGAIN)
         {
             err_sys("read error");
         }
         memset(recvline,0,MAXLINE+1);
     }
 
-    return 0;
+    close(sockfd);
+    exit(0);
 }
