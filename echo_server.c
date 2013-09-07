@@ -11,7 +11,7 @@ int main(int argc,char* argv[])
     time_t ticks;
     fd_set rfds,wfds,allfds;
     struct timeval timeout;
-
+    int maxfd=0;
     timeout.tv_sec = 5;
     timeout.tv_usec = 0;
     memset(&cliaddr,0,sizeof(cliaddr));
@@ -40,6 +40,8 @@ int main(int argc,char* argv[])
             perror ("accept");
             continue;
         }
+        maxfd = (maxfd >= conn_fd) ? maxfd : conn_fd;
+
         FD_SET(conn_fd,&allfds);
         FD_ZERO(&rfds);
         FD_ZERO(&wfds);
@@ -52,9 +54,10 @@ int main(int argc,char* argv[])
             printf("timeout,no read or write");
         else
         {
-            exit(1);
-        }
 
+        }
+        timeout.tv_sec = 5;
+        timeout.tv_usec = 0;
     }
     /*while (1)
     {

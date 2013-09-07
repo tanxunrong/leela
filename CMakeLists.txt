@@ -2,6 +2,7 @@
 project(leela)
 cmake_minimum_required(VERSION 2.8)
 aux_source_directory(. SRC_LIST)
+add_definitions( -std=c99 )
 
 set(HEADERS myc.h)
 add_executable(time_client time_client.c ${HEADERS})

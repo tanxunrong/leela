@@ -29,6 +29,7 @@ void err_sys(char *str)
     exit(errno);
 }
 
+
 void set_keepalive(int sockfd,int alive,int idle,int intval,int count)
 {
     if (alive <= 0 || idle <= 0 || count <= 0 || intval <= 0)
@@ -42,6 +43,7 @@ void set_keepalive(int sockfd,int alive,int idle,int intval,int count)
     if (setsockopt(sockfd,IPPROTO_TCP,TCP_KEEPCNT,(void *)&count,sizeof(count)) < 0)
         err_sys("keep cnt");*/
 }
+
 
 int readline(FILE *file,char* buf,size_t len)
 {
