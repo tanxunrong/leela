@@ -29,6 +29,12 @@ void err_sys(char *str)
     exit(errno);
 }
 
+void setfdnonblock(int fd)
+{
+    int fctl = fcntl(fd,F_GETFL);
+    fctl |= O_NONBLOCK;
+    fcntl(fd,F_SETFL,fctl);
+}
 
 void set_keepalive(int sockfd,int alive,int idle,int intval,int count)
 {

@@ -3,17 +3,25 @@
 
 int main(int argc,char* argv[])
 {
-    int listen_fd,n;
+    int listen_fd;
     struct sockaddr_in servaddr,cliaddr;
     char buf[MAXLINE];
     char addr[MAXLINE];
+    char rbuf[MAXLINE];
+    char wbuf[MAXLINE];
+
     socklen_t cliaddr_len;
     time_t ticks;
     fd_set rfds,wfds,allfds;
+    FD_ZERO(&rfds);
+    FD_ZERO(&wfds);
+    FD_ZERO(&allfds);
+
     struct timeval timeout;
     int maxfd=0;
-    timeout.tv_sec = 5;
-    timeout.tv_usec = 0;
+
+    timeout.tv_sec = 0;
+    timeout.tv_usec = 300;
     memset(&cliaddr,0,sizeof(cliaddr));
     memset(buf,0,MAXLINE);
     memset(addr,0,MAXLINE);
@@ -32,88 +40,72 @@ int main(int argc,char* argv[])
     if (listen(listen_fd,LISTEN_QUEUE) < 0)
         err_sys("listen");
 
+    setfdnonblock(listen_fd);
+
     while(1)
     {
-        int conn_fd;
+        int conn_fd=0;
         if ((conn_fd = accept(listen_fd,(struct sockaddr *)&cliaddr,&cliaddr_len)) < 0)
         {
-            perror ("accept");
-            continue;
+            if (errno == EAGAIN || errno == EWOULDBLOCK)
+                sleep(1);
         }
-        maxfd = (maxfd >= conn_fd) ? maxfd : conn_fd;
-
-        FD_SET(conn_fd,&allfds);
+        else
+        {
+            printf("peer addr port %u \n",ntohl(cliaddr.sin_port));
+            inet_ntop(cliaddr.sin_family,(void *)&cliaddr.sin_addr,addr,MAXLINE);
+            printf("peer addr host %s \n",addr);
+            maxfd = (maxfd >= conn_fd+1 ) ? maxfd : conn_fd+1;
+            FD_SET(conn_fd,&allfds);
+        }
         FD_ZERO(&rfds);
         FD_ZERO(&wfds);
-        rfds=allfds;
-        wfds=allfds;
+        int realMaxFd=0;
+        for(int j=0;j<maxfd;j++)
+        {
+            if(FD_ISSET(j,&allfds) > 0)
+            {
+//                printf("conn %d still exists \n",j);
+                FD_SET(j,&rfds);FD_SET(j,&wfds);
+                realMaxFd = (realMaxFd < j) ? j : realMaxFd;
+            }
+        }
+        maxfd = realMaxFd+1;
+
         int ready;
-        if( (ready = select(0,&rfds,&wfds,NULL,&timeout)) < 0)
+        if( (ready = select(maxfd,&rfds,&wfds,NULL,&timeout)) < 0)
             err_sys ("select");
         else if (ready  == 0)
-            printf("timeout,no read or write");
+            continue;
         else
         {
 
-        }
-        timeout.tv_sec = 5;
-        timeout.tv_usec = 0;
-    }
-    /*while (1)
-    {
-        if ((conn_fd = accept(listen_fd,(struct sockaddr *)&cliaddr,&cliaddr_len)) < 0)
-            err_sys("accept");
-        printf("peer addr port %u \n",ntohl(cliaddr.sin_port));
-        inet_ntop(cliaddr.sin_family,(void *)&cliaddr.sin_addr,addr,MAXLINE);
-        printf("peer addr host %s \n",addr);
-        memset(addr,0,MAXLINE);
-        int fp = fcntl(conn_fd,F_GETFL);
-        fp |= FD_CLOEXEC;
-        fcntl(conn_fd,F_SETFL,fp);
-
-        pid_t pid;
-        if ( (pid = fork()) == 0)
-        {
-            printf("pid : %d ppid : %d \n",getpid(),getppid());
-            fcntl(conn_fd,F_SETFL,fcntl(conn_fd,F_GETFL) | O_NONBLOCK);
-            //set_keepalive(conn_fd,5,2,1,3);
-            time_t alive_time=time(NULL);
-            while(1){
-                if ((n=read(conn_fd,buf,MAXLINE)) < 0)
+            ticks=time(NULL);
+            memset(wbuf,0,MAXLINE);
+            snprintf(wbuf,sizeof(buf),"%.24s\r\n",ctime(&ticks));
+            for(int i=0;i<maxfd;i++)
+            {
+                if(FD_ISSET(i,&rfds) > 0)
                 {
-                    if(errno != EAGAIN)
-                        err_sys("read");
+//                    printf("fd %d ready to read \n",i);
+                    memset(rbuf,0,MAXLINE);
+                    if (read(i,rbuf,MAXLINE) > 0)
+                        fputs(rbuf,stdout);
                     else
-                    {
-                        int cha;
-                        if( (cha = (time(NULL) - alive_time)) > 6)
-                        {
-                            printf("lost contact for %d second\n",cha);
-                            goto closeProcess;
-                        }
-                        sleep(1);
-                        continue;
-                    }
+                        perror("read");
                 }
-                alive_time = time(NULL);
-                fputs(buf,stdout);
-
-                ticks=time(NULL);
-                memset(buf,0,MAXLINE);
-                snprintf(buf,sizeof(buf),"%.24s\r\n",ctime(&ticks));
-                write(conn_fd,buf,sizeof(buf));
-                memset(buf,0,MAXLINE);
+                if (FD_ISSET(i,&wfds) > 0)
+                {
+//                    printf("fd %d ready to write \n",i);
+                    if (write(i,wbuf,MAXLINE) <= 0 )
+                        perror("write");
+                }
             }
-            closeProcess:
-            close(conn_fd);
-			printf("child %d exit\n",getpid());
-			exit(0);
+
         }
-        else
-        {
-            printf("fork pid %d \n",pid);
-            close(conn_fd);
-        }
-    }*/
+        timeout.tv_sec = 0;
+        timeout.tv_usec = 300;
+    }
+    return 0;
 
 }
