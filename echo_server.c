@@ -89,10 +89,7 @@ int main(int argc,char* argv[])
                 {
 //                    printf("fd %d ready to read \n",i);
                     memset(rbuf,0,MAXLINE);
-                    if (read(i,rbuf,MAXLINE) > 0)
-                        fputs(rbuf,stdout);
-                    else
-                        perror("read");
+                    read(i,rbuf,MAXLINE);
                 }
                 if (FD_ISSET(i,&wfds) > 0)
                 {
@@ -104,7 +101,7 @@ int main(int argc,char* argv[])
 
         }
         timeout.tv_sec = 0;
-        timeout.tv_usec = 300;
+        timeout.tv_usec = 100;
     }
     return 0;
 

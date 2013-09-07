@@ -2,12 +2,19 @@
 
 #include "myc.h"
 
+static int rcount = 0;
+void dealAlarm(int signum)
+{
+    printf("read from server count %d\n",rcount);
+    exit(0);
+}
+
 int main(int argc,char* argv[])
 {
-    int sockfd,n;
+    int sockfd;
     char recvline[MAXLINE+1];
     struct sockaddr_in servaddr;
-    char buf[MAXLINE];
+
     memset(recvline,0,sizeof(recvline));
     servaddr.sin_family=AF_INET;
     servaddr.sin_port=htons(3789);
@@ -25,6 +32,9 @@ int main(int argc,char* argv[])
     FD_SET(sockfd,&rfds);FD_SET(sockfd,&wfds);
     struct timeval timeout;
     timeout.tv_sec = 0;timeout.tv_usec = 200;
+
+    alarm(100);
+    signal(SIGALRM,(void*)dealAlarm);
     while (1)
     {
         FD_ZERO(&rfds);FD_ZERO(&wfds);
@@ -46,10 +56,7 @@ int main(int argc,char* argv[])
             {
                 memset(recvline,0,MAXLINE+1);
                 read(sockfd,recvline,MAXLINE);
-                if (fputs(recvline,stdout) == EOF)
-                {
-                    err_sys("fputs error");
-                }
+                rcount++;
             }
         }
 
