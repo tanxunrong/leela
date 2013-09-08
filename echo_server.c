@@ -3,7 +3,7 @@
 
 int main(int argc,char* argv[])
 {
-    int listen_fd;
+    int listen_fd,rn;
     struct sockaddr_in servaddr,cliaddr;
     char buf[MAXLINE];
     char addr[MAXLINE];
@@ -12,9 +12,10 @@ int main(int argc,char* argv[])
 
     socklen_t cliaddr_len;
     time_t ticks;
-    fd_set rfds,wfds,allfds;
+    fd_set rfds,wfds,allfds,expfds;
     FD_ZERO(&rfds);
     FD_ZERO(&wfds);
+    FD_ZERO(&expfds);
     FD_ZERO(&allfds);
 
     struct timeval timeout;
@@ -42,6 +43,8 @@ int main(int argc,char* argv[])
 
     setfdnonblock(listen_fd);
 
+    signal(SIGPIPE,SIG_IGN);
+
     while(1)
     {
         int conn_fd=0;
@@ -60,13 +63,14 @@ int main(int argc,char* argv[])
         }
         FD_ZERO(&rfds);
         FD_ZERO(&wfds);
+//        FD_ZERO(&expfds);
         int realMaxFd=0;
         for(int j=0;j<maxfd;j++)
         {
             if(FD_ISSET(j,&allfds) > 0)
             {
 //                printf("conn %d still exists \n",j);
-                FD_SET(j,&rfds);FD_SET(j,&wfds);
+                FD_SET(j,&rfds);FD_SET(j,&wfds);//FD_SET(j,&expfds);
                 realMaxFd = (realMaxFd < j) ? j : realMaxFd;
             }
         }
@@ -89,13 +93,25 @@ int main(int argc,char* argv[])
                 {
 //                    printf("fd %d ready to read \n",i);
                     memset(rbuf,0,MAXLINE);
-                    read(i,rbuf,MAXLINE);
+                    if((rn =recv(i,rbuf,MAXLINE,0)) < 0 )
+                        perror("recv");
+                    else if (rn == 0)
+                    {
+                        printf("sock fd %d shut down orderly \n",i);
+                        FD_CLR(i,&allfds);
+                        close(i);
+                        break;
+                    }
                 }
                 if (FD_ISSET(i,&wfds) > 0)
                 {
 //                    printf("fd %d ready to write \n",i);
                     if (write(i,wbuf,MAXLINE) <= 0 )
+                    {
                         perror("write");
+                        FD_CLR(i,&allfds);
+                        close(i);
+                    }
                 }
             }
 
