@@ -3,15 +3,17 @@
 #include "myc.h"
 
 static int rcount = 0;
+static int sockfd = 0;
 void dealAlarm(int signum)
 {
     printf("read from server count %d\n",rcount);
+    close(sockfd);
     exit(0);
 }
 
 int main(int argc,char* argv[])
 {
-    int sockfd;
+
     char recvline[MAXLINE+1];
     struct sockaddr_in servaddr;
 
