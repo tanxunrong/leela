@@ -11,6 +11,7 @@ add_executable(echo_client echo_client.c ${HEADERS})
 add_executable(echo_server echo_server.c ${HEADERS})
 add_executable(glibtest glibtest.c)
 add_executable(testcurl curl.c)
+add_executable(uds uds.c)
 
 if(UNIX)
     if(APPLE)
