@@ -13,8 +13,6 @@ void communicate_client(evutil_socket_t fd,short what,void *extra)
            (what & EV_WRITE) ? "write" : " ",
            (what & EV_SIGNAL) ? "signal" : " ",
            data);
-    if (what & EV_WRITE)
-        write(fd,"got you",strlen("got you")+1);
     if (what & EV_READ)
     {
         char buf[MAXLINE];
@@ -23,6 +21,8 @@ void communicate_client(evutil_socket_t fd,short what,void *extra)
         buf[n]='\0';
         fputs(buf,stdout);
     }
+    if (what & EV_WRITE)
+        write(fd,"got you",strlen("got you")+1);
 
 }
 
@@ -66,7 +66,10 @@ int main(int argc,char* argv[])
     setfdnonblock(listen_fd);
 
     socklen_t cliaddr_len = 0;
+    FILE *logfile = fopen("/tmp/event.test.log","w+");
+    if(logfile == NULL) err_sys("fopen");
 
+    struct timeval ten_second = {10,0};
         int conn_fd;
         GOTO_ACCEPT:
         if ((conn_fd = accept(listen_fd,(struct sockaddr *)&cliaddr,&cliaddr_len)) < 0)
@@ -85,7 +88,9 @@ int main(int argc,char* argv[])
                               (void*)communicate_client,"conn");
         if (sock_event == NULL)
             err_sys("event_new");
+        event_add(sock_event,&ten_second);
 
+        event_base_dump_events(main_base,logfile);
     event_base_dispatch(main_base);
     event_base_free(main_base);
     return 0;
