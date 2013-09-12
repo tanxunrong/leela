@@ -47,17 +47,21 @@ int main(int argc,char* argv[])
         if ((ready = select(sockfd+1,&rfds,&wfds,NULL,&timeout)) < 0)
             err_sys("select");
         else if(ready == 0)
-             continue;
+        {
+            continue;
+        }
         else
         {
             if(FD_ISSET(sockfd,&wfds) > 0)
             {
                 write(sockfd,msg,strlen(msg));
+//                printf("write\n");
             }
             if(FD_ISSET(sockfd,&rfds) > 0)
             {
                 memset(recvline,0,MAXLINE+1);
                 read(sockfd,recvline,MAXLINE);
+//                printf("read\n");
                 rcount++;
             }
         }

@@ -24,6 +24,7 @@ if(UNIX)
         link_directories(${LINK_DIRECTORIES} /lib/x86_64-linux-gnu)
         target_link_libraries(glibtest glib-2.0)
         target_link_libraries(testcurl curl)
+        target_link_libraries(echo_server event glib-2.0)
     endif()
 endif()
 
