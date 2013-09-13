@@ -50,19 +50,3 @@ void set_keepalive(int sockfd,int alive,int idle,int intval,int count)
     if (setsockopt(sockfd,IPPROTO_TCP,TCP_KEEPCNT,(void *)&count,sizeof(count)) < 0)
         err_sys("keep cnt");*/
 }
-
-
-int readline(FILE *file,char* buf,size_t len)
-{
-    char tmp[len+1];
-    memset(tmp,0,len+1);
-    int i = 0;
-    while ( (tmp[i++] = fgetc(file)) != '\n' )
-    {
-        if (i >= len)
-            break;
-    }
-    tmp[len]='\0';
-    memcpy(buf,tmp,i);
-    return i;
-}
