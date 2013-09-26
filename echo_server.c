@@ -1,97 +1,167 @@
 
 #include "myc.h"
-#include <event2/event.h>
 #include <glib.h>
 
-void communicate_client(evutil_socket_t fd,short what,void *extra)
-{
-    const char *data = extra;
-    printf("get an event on socket %d : %s %s %s %s \n extra data %s\n",
-           (int)fd,
-           (what & EV_TIMEOUT) ? "timeout" : " ",
-           (what & EV_READ) ? "read" : " ",
-           (what & EV_WRITE) ? "write" : " ",
-           (what & EV_SIGNAL) ? "signal" : " ",
-           data);
-    if (what & EV_READ)
-    {
-        char buf[MAXLINE];
-        memset(buf,0,MAXLINE);
-        int n = read(fd,buf,MAXLINE);
-        buf[n]='\0';
-        fputs(buf,stdout);
-    }
-    if (what & EV_WRITE)
-        write(fd,"got you",strlen("got you")+1);
+typedef struct sock_conn {
+    int sockfd;
+    int epIdx;
+    int status;
+    char wbuf[MAXLINE];
+    char rbuf[MAXLINE];
+//    struct sockaddr_in cliaddr;
+}*sock_conn_t;
 
+static pthread_t listenTh;
+static int listen_fd;
+static sig_atomic_t shut_down=0;
+#define CONN_MAXFD 65536
+static sock_conn_t conn_table[CONN_MAXFD] = {0};
+
+#define EPOLL_NUM 6
+#define THREAD_PER_EPOLL_FD 8
+#define NUM_TOTAL_WORKERS (EPOLL_NUM * THREAD_PER_EPOLL_FD)
+static int epFd[EPOLL_NUM];
+static pthread_t worker[NUM_TOTAL_WORKERS];
+
+void shut_down_server(void *arg)
+{
+    shut_down=1;
+}
+
+void *listenWorker(void *arg)
+{
+    int lisEpfd=epoll_create(10);
+
+    struct epoll_event evReg;
+    evReg.events = EPOLLIN;
+    evReg.data.fd = lisEpfd;
+
+    epoll_ctl(lisEpfd,EPOLL_CTL_ADD,listen_fd,&evReg);
+
+    struct epoll_event evHappen;
+
+    int rrindex=0;
+    while (shut_down == 0)
+    {
+        int numEvent=epoll_wait(lisEpfd,&evHappen,1,1000);
+        if(numEvent > 0)
+        {
+            int sockfd = accept(listen_fd,NULL,NULL);
+            setfdnonblock(sockfd);
+
+            evReg.data.fd = sockfd;
+            evReg.events = EPOLLIN | EPOLLOUT | EPOLLONESHOT;
+
+            conn_table[sockfd].epIdx = rrindex;
+
+            epoll_ctl(epFd[rrindex],EPOLL_CTL_ADD,sockfd,&evReg);
+            rrindex = (rrindex+1) % EPOLL_NUM;
+        }
+    }
+}
+
+int handleWriteEvent(sock_conn_t conn)
+{
+
+}
+
+int handleReadEvent(sock_conn_t conn)
+{
+
+}
+
+void closeConnection(sock_conn_t conn)
+{
+
+}
+
+void *workerThread(void *arg)
+{
+    int epfd = *(int*)arg;
+    struct epoll_event evHappen;
+    struct epoll_event evReg;
+
+    while(shut_down == 0)
+    {
+        int numEvents = epoll_wait(epfd,&evHappen,1,1000);
+        if (numEvents > 0)
+        {
+            int sock = evHappen.data.fd;
+            sock_conn_t conn = &conn_table[sock];
+            if (evHappen.events & EPOLLOUT)
+            {
+                if (handleWriteEvent(conn) == -1)
+                {
+                    closeConnection(conn);
+                    continue;
+                }
+
+            }
+        }
+    }
 }
 
 int main(int argc,char* argv[])
 {
-    int listen_fd;
-    struct sockaddr_in servaddr,cliaddr;
-    char buf[MAXLINE];
-    char addr[MAXLINE];
+    struct sigaction sigact;
+    memset(&sigact,0,sizeof(sigact));
 
-    struct event_config *base_config = event_config_new();
-    event_config_avoid_method(base_config,"select");
-//    struct timeval msec_100 = {0,100*1000};
-    struct event_base * main_base = event_base_new_with_config(base_config);
-    if (main_base == NULL)
-        err_sys("create event base");
-    else
+    sigact.sa_handler=shut_down_server;
+    sigaction(SIGINT,&sigact,NULL);
+    sigaction(SIGTERM,&sigact,NULL);
+
+    for(int i=0;i<EPOLL_NUM;i++)
     {
-        printf("event base backend use %s \n",event_base_get_method(main_base));
+        epFd[i]=epoll_create(20);
     }
-    event_config_free(base_config);
 
-    memset(&cliaddr,0,sizeof(cliaddr));
-    memset(buf,0,MAXLINE);
-    memset(addr,0,MAXLINE);
+    if ((listen_fd = socket(AF_INET,SOCK_STREAM,0)) < 0)
+        err_sys("create socket");
 
+    struct sockaddr_in servaddr;
+    memset(&servaddr,0,sizeof(servaddr));
     servaddr.sin_family=AF_INET;
     servaddr.sin_port=htons(3789);
     if( inet_pton(AF_INET,"127.0.0.1",&servaddr.sin_addr) <= 0)
         err_quit ("inet_pton");
 
-    if ((listen_fd = socket(AF_INET,SOCK_STREAM,0)) < 0)
-        err_sys("create socket");
-
+    //bind & listen
     if (bind(listen_fd,(struct sockaddr *)&servaddr,sizeof(servaddr)) < 0)
         err_sys("bind");
-
     if (listen(listen_fd,LISTEN_QUEUE) < 0)
         err_sys("listen");
-
     setfdnonblock(listen_fd);
 
-    socklen_t cliaddr_len = 0;
-    FILE *logfile = fopen("/tmp/event.test.log","w+");
-    if(logfile == NULL) err_sys("fopen");
-
-    struct timeval ten_second = {10,0};
-        int conn_fd;
-        GOTO_ACCEPT:
-        if ((conn_fd = accept(listen_fd,(struct sockaddr *)&cliaddr,&cliaddr_len)) < 0)
+    pthread_create(&listenTh,NULL,(void*)listenWorker,NULL);
+    for(int i=0;i<EPOLL_NUM;i++)
+    {
+        for(int j=0;j<THREAD_PER_EPOLL_FD;j++)
         {
-            if (errno == EAGAIN || errno == EWOULDBLOCK)
-            {
-                sleep(1);
-                goto GOTO_ACCEPT;
-            }
+            pthread_create(worker+i*EPOLL_NUM+j,NULL,(void*)workerThread,epFd+i);
         }
-        printf("peer addr port %d \n",ntohl(cliaddr.sin_port));
-        inet_ntop(cliaddr.sin_family,(void *)&cliaddr.sin_addr,addr,MAXLINE);
-        printf("peer addr host %s \n",addr);
-        struct event * sock_event;
-        sock_event= event_new(main_base,conn_fd,EV_TIMEOUT | EV_READ | EV_WRITE ,
-                              (void*)communicate_client,"conn");
-        if (sock_event == NULL)
-            err_sys("event_new");
-        event_add(sock_event,&ten_second);
+    }
 
-        event_base_dump_events(main_base,logfile);
-    event_base_dispatch(main_base);
-    event_base_free(main_base);
+    for(int i=0;i<NUM_TOTAL_WORKERS;i++)
+    {
+        pthread_join(worker[i],NULL);
+    }
+    pthread_join(listen_fd,NULL);
+
+    struct epoll_event evReg;
+    for(int j=0;j<CONN_MAXFD;j++)
+    {
+        sock_conn_t conn = conn_table+i;
+        if(conn->status)
+        {
+            epoll_ctl(conn->epIdx,EPOLL_CTL_DEL,conn->sockfd,&evReg);
+            close(conn->sockfd);
+        }
+    }
+    for(int i=0;i<EPOLL_NUM;i++)
+    {
+        close(epFd[i]);
+    }
+    close(listen_fd);
+
     return 0;
 }

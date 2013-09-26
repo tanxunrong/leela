@@ -29,7 +29,7 @@ if(UNIX)
 /usr/include/glib-2.0
 /usr/lib/x86_64-linux-gnu/glib-2.0/include)
         link_directories(${LINK_DIRECTORIES} /lib/x86_64-linux-gnu)
-        target_link_libraries(echo_server event glib-2.0)
+        target_link_libraries(echo_server glib-2.0 pthread)
     endif()
 endif()
 

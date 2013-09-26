@@ -14,6 +14,7 @@
 #include <fcntl.h>
 #include <sys/select.h>
 #include <pthread.h>
+#include <sys/epoll.h>
 
 #define MAXLINE 1000
 #define LISTEN_QUEUE 10
