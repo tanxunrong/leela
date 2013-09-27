@@ -30,6 +30,7 @@ if(UNIX)
 /usr/lib/x86_64-linux-gnu/glib-2.0/include)
         link_directories(${LINK_DIRECTORIES} /lib/x86_64-linux-gnu)
         target_link_libraries(echo_server glib-2.0 pthread)
+        target_link_libraries(uds glib-2.0)
     endif()
 endif()
 
