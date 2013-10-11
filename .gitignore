@@ -1,2 +1,5 @@
 CMakeLists.txt.user
 .DS_Store
+*.o
+*.swp
+*~
