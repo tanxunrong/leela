@@ -24,7 +24,7 @@ int main(int argc,char* argv[])
         err_sys("listen");
     while (1)
     {
-        if ((conn_fd = accept(listen_fd,(struct sockaddr *)NULL,0)) < 0)
+        if ((conn_fd = accept(listen_fd,(struct sockaddr *)&cliaddr,0)) < 0)
         {
             err_sys("accept");
         }
