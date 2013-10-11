@@ -1,7 +1,7 @@
 Common_cflags= -Wall -g -std=c99
 Glib_cflags := $(shell pkg-config --cflags glib-2.0)
 Event_cflags := $(shell pkg-config --cflags libevent)
-CFLAGS=$(shell echo $CFLAGS) $(Common_cflags) $(Glib_cflags) $(Event_cflags) 
+CFLAGS=$(Common_cflags) $(Glib_cflags) $(Event_cflags) 
 
 Objs = echo_client.o echo_server.o \
 	time_client.o time_server.o uds.o
