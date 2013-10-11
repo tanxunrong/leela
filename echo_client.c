@@ -27,7 +27,7 @@ int main(int argc,char* argv[])
         err_quit("create socket err");
     if ( connect(sockfd,(struct sockaddr *)&servaddr,sizeof(struct sockaddr_in)) < 0)
         err_sys("connect error");
-    char *msg="client msg";
+    char *msg="client msg\n";
 
     alarm(100);
     signal(SIGALRM,(void*)dealSig);
@@ -36,8 +36,10 @@ int main(int argc,char* argv[])
     while (1)
     {
           write(sockfd,msg,strlen(msg)+1);
+          printf("write\n");
           memset(recvline,0,MAXLINE);
           read(sockfd,recvline,MAXLINE);
+          printf("read\n");
           rcount++;
     }
 

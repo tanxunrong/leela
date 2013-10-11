@@ -19,10 +19,11 @@ if(UNIX)
         link_directories(${LINK_DIRECTORIES}
 /usr/local/Cellar/glib/2.36.4/lib
 /usr/local/opt/gettext/lib
-/usr/local/Cellar/curl/7.32.0/include
+#/usr/local/Cellar/curl/7.32.0/include
 /usr/local/Cellar/libevent/2.0.21/lib)
 
         target_link_libraries(echo_server event glib-2.0)
+        target_link_libraries(uds glib-2.0)
     else()
         include_directories(${INCLUDE_DIRECTORIES}
 /usr/include
