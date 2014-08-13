@@ -1,6 +1,17 @@
 
 #include "myc.h"
 #include <glib.h>
+gboolean timeout_cb(gpointer data);
+
+static gpointer
+_timer(gpointer *param) {
+    GMainLoop *timeLoop = g_main_loop_new(NULL,false);
+    g_timeout_add(5,timeout_cb,NULL);
+    g_main_loop_run(timeLoop);
+    g_main_loop_unref(timeLoop);
+    return NULL;
+}
+
 
 gboolean timeout_cb(gpointer data)
 {
@@ -17,10 +28,7 @@ gboolean timeout_cb(gpointer data)
 
 int main(int argc,char *argv[])
 {
-    GMainLoop *loop;
-    loop=g_main_loop_new(NULL,FALSE);
-    g_timeout_add(100,timeout_cb,loop);
-    g_main_loop_run(loop);
-    g_main_loop_unref(loop);
+    GThread *timerThread = g_thread_new("timer",_timer,NULL);
+    g_thread_join(timerThread);
     return 0;
 }
