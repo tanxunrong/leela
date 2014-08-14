@@ -1,6 +1,8 @@
 
 #include "myc.h"
 #include "msg_queue.h"
+#include "handle.h"
+
 #include <glib.h>
 gboolean timeout_cb(gpointer data);
 struct lmsg *
@@ -14,6 +16,14 @@ dummy_msg()
 
     return ret;
 }
+
+struct leela_context * dummy_ctx(guint32 handle)
+{
+    struct leela_context *ret = g_malloc0(sizeof(*ret));
+    ret->handle = handle;
+    return ret;
+}
+
 
 static gpointer
 _timer(gpointer param) {
@@ -36,7 +46,7 @@ gboolean timeout_cb(gpointer data)
 {
     if (leela_globalmq_pop() != NULL)
     {
-g_error("global queue not empty");
+        g_error("global queue not empty");
         return FALSE;
     }
 
@@ -94,10 +104,23 @@ _worker(gpointer param) {
     return NULL;
 }
 
+void test_1()
+{
+    struct leela_context *dummy1 = dummy_ctx(1);
+    leela_handle_register(dummy1);
+
+    struct leela_context *test1 = leela_handle_grab(1);
+
+    g_assert(test1 == dummy1);
+}
 
 int main(int argc,char *argv[])
 {
     leela_mq_init();
+    leela_handle_init();
+
+    test_1();
+
     GThread *timerThread = g_thread_new("timer",_timer,NULL);
     GThread *workerThread = g_thread_new("worker",_worker,NULL);
     g_thread_join(timerThread);
