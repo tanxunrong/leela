@@ -30,10 +30,9 @@ if(UNIX)
         target_link_libraries(uds glib-2.0)
     else()
         include_directories(${INCLUDE_DIRECTORIES}
-/usr/include
-/usr/include/glib-2.0
-/usr/lib/x86_64-linux-gnu/glib-2.0/include)
-        link_directories(${LINK_DIRECTORIES} /lib/x86_64-linux-gnu)
+#/usr/include/glib-2.0
+/home/tanxr/local/include/glib-2.0)
+        link_directories(${LINK_DIRECTORIES} /home/tanxr/local/lib)
 #        target_link_libraries(echo_server glib-2.0 pthread)
         target_link_libraries(uds glib-2.0 mruby)
     endif()

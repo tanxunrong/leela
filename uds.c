@@ -17,10 +17,17 @@ dummy_msg()
 
 static gpointer
 _timer(gpointer param) {
-    GMainLoop *timeLoop = g_main_loop_new(NULL,FALSE);
-    g_timeout_add(5,timeout_cb,NULL);
+    GMainContext *timerCtx = g_main_context_new();
+    GMainLoop *timeLoop = g_main_loop_new(timerCtx,FALSE);
+
+    g_print("ctx %p loop %p\n",timerCtx,timeLoop);
+
+    GSource *source = g_timeout_source_new(100);
+    g_source_set_callback(source,timeout_cb,NULL,NULL);
+    g_source_attach(source,timerCtx);
+
     g_main_loop_run(timeLoop);
-    g_main_loop_quit(timeLoop);
+    g_main_context_unref(timerCtx);
     return NULL;
 }
 
@@ -29,9 +36,10 @@ gboolean timeout_cb(gpointer data)
 {
     if (leela_globalmq_pop() != NULL)
     {
-        g_debug("global queue not empty");
+g_error("global queue not empty");
         return FALSE;
     }
+
     return TRUE;
 }
 
@@ -41,8 +49,10 @@ gboolean worker_cb_1(gpointer data)
     struct lmsg *dummy = dummy_msg();
     if (leela_mq_push(mq,dummy) != 0)
     {
+//        leela_mq_release();
         return FALSE;
     }
+
     g_debug("cb_1 called");
     return TRUE;
 }
@@ -50,26 +60,37 @@ gboolean worker_cb_1(gpointer data)
 gboolean worker_cb_2(gpointer data)
 {
     struct lmsg_queue *mq = data;
-    if (leela_mq_length(mq) > 10)
+    if (leela_mq_length(mq) > 100)
     {
         leela_globalmq_push(mq);
         return FALSE;
     }
+
     g_debug("cb_2 called");
     return TRUE;
 }
 
 static gpointer
 _worker(gpointer param) {
-    GMainLoop *timeLoop = g_main_loop_new(NULL,FALSE);
+    GMainContext *workerCtx = g_main_context_new();
+
+    GMainLoop *timeLoop = g_main_loop_new(workerCtx,FALSE);
+    g_print("worker %p loop %p\n",workerCtx,timeLoop);
     struct lmsg_queue *mq = leela_mq_create(1);
     int t1,t2;
     t1 = g_random_int() % 100;
     t2 = g_random_int() % 100;
-    g_timeout_add(t1,worker_cb_1,mq);
-    g_timeout_add(t2,worker_cb_2,mq);
+
+    GSource *source1 = g_timeout_source_new(t1);
+    g_source_set_callback(source1,worker_cb_1,mq,NULL);
+    g_source_attach(source1,workerCtx);
+
+    GSource *source2 = g_timeout_source_new(t2);
+    g_source_set_callback(source2,worker_cb_2,mq,NULL);
+    g_source_attach(source2,workerCtx);
+
     g_main_loop_run(timeLoop);
-    g_main_loop_quit(timeLoop);
+    g_main_context_unref(workerCtx);
     return NULL;
 }
 
