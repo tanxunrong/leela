@@ -15,6 +15,8 @@ add_library(mruby STATIC IMPORTED)
 set_target_properties(mruby PROPERTIES IMPORTED_LOCATION ${PROJECT_SOURCE_DIR}/mruby/build/host/lib/libmruby.a )
 include_directories( ${PROJECT_SOURCE_DIR}/mruby/include )
 
+add_library(toy SHARED service/service_toy.c)
+
 if(UNIX)
     if(APPLE)
         include_directories(${INCLUDE_DIRECTORIES} /usr/local/Cellar/glib/2.36.4/include/glib-2.0 /usr/local/Cellar/glib/2.36.4/lib/glib-2.0/include
@@ -34,7 +36,7 @@ if(UNIX)
 /home/tanxr/local/include/glib-2.0)
         link_directories(${LINK_DIRECTORIES} /home/tanxr/local/lib)
 #        target_link_libraries(echo_server glib-2.0 pthread)
-        target_link_libraries(uds glib-2.0 gmodule-2.0 mruby)
+        target_link_libraries(uds glib-2.0 gmodule-2.0 mruby m toy)
     endif()
 endif()
 

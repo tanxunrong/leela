@@ -2,8 +2,9 @@
 #include "myc.h"
 #include "msg_queue.h"
 #include "handle.h"
-
+#include <mruby.h>
 #include <glib.h>
+
 gboolean timeout_cb(gpointer data);
 struct leela_msg *
 dummy_msg()
@@ -120,12 +121,21 @@ void test_1()
     leela_handle_retire_all();
 }
 
+void test_2()
+{
+    mrb_close(mrb_open());
+    struct leela_module *md = leela_module_query("toy");
+    g_assert(md);
+}
+
 int main(int argc,char *argv[])
 {
     leela_mq_init();
     leela_handle_init();
+    leela_module_init("/home/tanxr/workspace/unp_mystudy-build/lib?.so");
 
     test_1();
+    test_2();
 
     GThread *timerThread = g_thread_new("timer",_timer,NULL);
     GThread *workerThread = g_thread_new("worker",_worker,NULL);

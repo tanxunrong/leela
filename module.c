@@ -18,7 +18,7 @@ leela_open_so(const char *name)
     gchar *path = g_strdup(m->path);
     gchar **div = g_strsplit(path,";",0);
     guint sz = strlen(name);
-    g_assert(sz == 0);
+    g_assert(sz != 0);
     g_free(path);
 
     if (div)
@@ -78,7 +78,7 @@ void leela_module_insert(struct leela_module *mod);
 struct leela_module * leela_module_query(const char * name)
 {
     struct leela_module_all *m = GM;
-    struct leela_module *module;
+    struct leela_module *module = NULL;
     gchar *module_name = g_strdup(name);
     g_strchomp(module_name);
 
@@ -91,32 +91,38 @@ struct leela_module * leela_module_query(const char * name)
     }
     g_assert(m->num < LEELA_MAX_MODULE);
     g_mutex_lock(&m->mtx);
-    struct GModule *so = leela_open_so(name);
+    GModule *so = leela_open_so(name);
     if (so)
     {
-        struct leela_module *newModule = &(m->modules[m->num]);
-        newModule->module = so;
-        newModule->name = module_name;
+        module = &(m->modules[m->num]);
+        module->module = so;
+        module->name = module_name;
+
         gchar *createSymbol = g_strjoin(NULL,name,"_create");
-        gchar *initSymbol = g_strjoin(NULL,name,"_init");
-        gchar *releaseSymbol = g_strjoin(NULL,name,"_release");
-        if (!g_module_symbol(so,createSymbol,newModule->create))
+        gchar *initSymbol = g_strjoin(NULL,g_strdup(name),"_init");
+        gchar *releaseSymbol = g_strjoin(NULL,g_strdup(name),"_release");
+
+        if (!g_module_symbol(so,createSymbol,module->create))
         {
             g_error("create symbol empty for module %s",module_name);
         }
-        if (!g_module_symbol(so,initSymbol,newModule->init))
+        if (!g_module_symbol(so,initSymbol,module->init))
         {
             g_error("init symbol empty for module %s",module_name);
         }
-        if (!g_module_symbol(so,releaseSymbol,newModule->release))
+        if (!g_module_symbol(so,releaseSymbol,module->release))
         {
             g_error("release symbol empty for module %s",module_name);
         }
         g_free(createSymbol);
         g_free(initSymbol);
         g_free(releaseSymbol);
+
+        m->num++;
+        module = module;
     }
     g_mutex_unlock(&m->mtx);
+    return module;
 }
 
 void * leela_module_instance_create(struct leela_module *);
@@ -127,7 +133,7 @@ void leela_module_init(const char *path)
 {
     g_assert(GM == NULL);
     struct leela_module_all *m = g_malloc0(sizeof(*m));
-    g_assert(g_ascii_isprint(path));
+//    g_assert(g_ascii_isprint(path));
 
     m->path = g_strdup(path);
     g_assert(strlen(m->path) != 0);
