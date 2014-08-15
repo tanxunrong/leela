@@ -2,16 +2,31 @@
 #include "handle.h"
 
 static struct lhandle_store *GH = NULL;
+
+/**
+ * @brief leela_handle_init,init the global handle_store
+ */
 void leela_handle_init()
 {
     g_assert(GH == NULL);
     struct lhandle_store *h = g_malloc0(sizeof(*h));
     g_mutex_init(&h->mtx);
     h->handleAry = g_array_new(FALSE,TRUE,sizeof(struct lhandle_name));
-    h->ctxList = g_list_alloc();
+
+    /**
+     * must be null
+     */
+    h->ctxList = NULL;
+    h->handleIdx = 0;
+
     GH = h;
 }
 
+/**
+ * @brief leela_handle_findname
+ * @param name
+ * @return handle_id
+ */
 guint32 leela_handle_findname(const char *name)
 {
     g_assert(name != NULL);
@@ -35,6 +50,12 @@ guint32 leela_handle_findname(const char *name)
     return ret;
 }
 
+/**
+ * @brief leela_name_handle
+ * @param handle
+ * @param name
+ * @return name
+ */
 const char *leela_name_handle(guint32 handle,const char *name)
 {
     g_assert(name != NULL);
@@ -57,11 +78,21 @@ const char *leela_name_handle(guint32 handle,const char *name)
     newHandle->name = g_strdup(name);
     g_array_append_val(h->handleAry,*newHandle);
 
+    /**
+     * do not free the pointer name
+     */
+    g_free(newHandle);
+
     g_mutex_unlock(&h->mtx);
 
     return newHandle->name;
 }
 
+/**
+ * @brief leela_handle_register
+ * @param ctx
+ * @return
+ */
 guint
 leela_handle_register(struct leela_context *ctx)
 {
@@ -70,6 +101,11 @@ leela_handle_register(struct leela_context *ctx)
     g_mutex_lock(&h->mtx);
     h->ctxList = g_list_append(h->ctxList,ctx);
     guint handle = ++h->handleIdx;
+
+    /**
+     * @todo replace with context_init func later
+     */
+    ctx->handle = handle;
     g_mutex_unlock(&h->mtx);
     return handle;
 }
@@ -87,23 +123,30 @@ leela_handle_register(struct leela_context *ctx)
 //    return 1;
 //}
 
+/**
+ * @brief leela_handle_grab
+ * @param handle
+ * @return
+ */
 struct leela_context *
 leela_handle_grab(guint handle)
 {
     struct lhandle_store *h = GH;
     struct leela_context *ret = NULL;
+
     g_mutex_lock(&h->mtx);
     GList *ll = h->ctxList;
-    while(ll != NULL)
+    while(ll)
     {
-        struct leela_context *ctx = g_list_nth(ll,0);
+        struct leela_context *ctx = (struct leela_context *)g_list_nth_data(ll,0);
         if (ctx->handle == handle)
         {
-            ret = ll->data;
+            ret = ctx;
             break;
         }
         ll = g_list_next(h->ctxList);
     }
     g_mutex_unlock(&h->mtx);
+
     return ret;
 }
