@@ -27,11 +27,11 @@ void leela_handle_init()
  * @param name
  * @return handle_id
  */
-guint32 leela_handle_findname(const char *name)
+guint leela_handle_findname(const char *name)
 {
     g_assert(name != NULL);
     struct lhandle_store *h = GH;
-    guint32 ret = 0;
+    guint ret = 0;
 
     g_mutex_lock(&h->mtx);
 
@@ -56,7 +56,7 @@ guint32 leela_handle_findname(const char *name)
  * @param name
  * @return name
  */
-const char *leela_name_handle(guint32 handle,const char *name)
+const char *leela_name_handle(guint handle,const char *name)
 {
     g_assert(name != NULL);
     struct lhandle_store *h = GH;
@@ -93,8 +93,7 @@ const char *leela_name_handle(guint32 handle,const char *name)
  * @param ctx
  * @return
  */
-guint
-leela_handle_register(struct leela_context *ctx)
+guint leela_handle_register(struct leela_context *ctx)
 {
     g_assert(ctx);
     struct lhandle_store *h = GH;
@@ -149,4 +148,68 @@ leela_handle_grab(guint handle)
     g_mutex_unlock(&h->mtx);
 
     return ret;
+}
+
+/**
+ * @brief leela_handle_retire
+ * @param handle
+ */
+void leela_handle_retire(guint handle)
+{
+    struct leela_context *ctx = leela_handle_grab(handle);
+    struct lhandle_store *h=GH;
+    if (ctx)
+    {
+        g_mutex_lock(&GH->mtx);
+        GH->ctxList = g_list_remove(h->ctxList,ctx);
+
+        for(int i=0;i< h->handleAry->len;i++)
+        {
+            struct lhandle_name *ival = &g_array_index(h->handleAry,struct lhandle_name,i);
+            if (ival->handle == handle);
+            {
+                g_array_remove_index(h->handleAry,i);
+                g_free(ival->name);
+                g_free(ival);
+                break;
+            }
+        }
+
+        leela_context_release(ctx);
+        g_mutex_unlock(&h->mtx);
+    }
+    else
+    {
+        g_error("handle %u empty",handle);
+    }
+}
+
+void leela_handle_retire_all()
+{
+    struct lhandle_store *h=GH;
+    if (h->ctxList != NULL)
+    {
+        g_mutex_lock(&h->mtx);
+//        struct leela_context *ctx = glis
+        /// @brief free context
+        GList *ll = h->ctxList;
+        while(ll)
+        {
+            struct leela_context *ctx = (struct leela_context *)ll->data;
+            leela_context_release(ctx);
+            ll->data = NULL;
+            ll = ll->next;
+        }
+        g_list_free(h->ctxList);
+
+        /// @brief free handle_name
+        for(int i=0;i< h->handleAry->len;i++)
+        {
+            struct lhandle_name *ival = &g_array_index(h->handleAry,struct lhandle_name,i);
+            g_free(ival->name);
+            ival->name = NULL;
+        }
+        g_assert(g_array_free(h->handleAry,TRUE) == NULL);
+        g_mutex_unlock(&h->mtx);
+    }
 }

@@ -17,10 +17,9 @@ dummy_msg()
     return ret;
 }
 
-struct leela_context * dummy_ctx(guint32 handle)
+struct leela_context * dummy_ctx()
 {
     struct leela_context *ret = g_malloc0(sizeof(*ret));
-    ret->handle = handle;
     return ret;
 }
 
@@ -106,12 +105,19 @@ _worker(gpointer param) {
 
 void test_1()
 {
-    struct leela_context *dummy1 = dummy_ctx(1);
+    struct leela_context *dummy1 = dummy_ctx();
     leela_handle_register(dummy1);
 
-    struct leela_context *test1 = leela_handle_grab(1);
+    struct leela_context *dummy2 = dummy_ctx();
+    leela_handle_register(dummy2);
+
+    struct leela_context *test1 = leela_handle_grab(dummy1->handle);
+    struct leela_context *test2 = leela_handle_grab(dummy2->handle);
 
     g_assert(test1 == dummy1);
+    g_assert(test2 == dummy2);
+
+    leela_handle_retire_all();
 }
 
 int main(int argc,char *argv[])

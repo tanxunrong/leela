@@ -60,9 +60,13 @@ leela_mq_create(guint32 handle)
 
 void leela_mq_release(struct lmsg_queue *mq,GDestroyNotify shit)
 {
-	g_mutex_clear(&mq->mtx);
-    g_queue_free_full(mq->queue,shit);
-	g_free(mq);
+    if (mq != NULL)
+    {
+        g_mutex_clear(&mq->mtx);
+        g_queue_free_full(mq->queue,shit);
+        g_free(mq);
+    }
+
 }
 
 	guint32

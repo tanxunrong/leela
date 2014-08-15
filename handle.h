@@ -7,7 +7,7 @@
 #include <glib.h>
 
 struct lhandle_name {
-    guint32 handle; /** unique in global handle_store*/
+    guint handle; /** unique in global handle_store*/
     gchar *name;
 };
 
@@ -18,8 +18,8 @@ struct lhandle_store {
     GArray *handleAry;
 };
 
-guint32 leela_handle_findname(const char *name);
-const char *leela_name_handle(guint32 handle,const char *name);
+guint leela_handle_findname(const char *name);
+const char *leela_name_handle(guint handle,const char *name);
 void leela_handle_init();
 
 guint
@@ -27,5 +27,8 @@ leela_handle_register(struct leela_context *ctx);
 
 struct leela_context *
 leela_handle_grab(guint handle);
+
+void leela_handle_retire(guint handle);
+void leela_handle_retire_all();
 
 #endif
