@@ -1,7 +1,7 @@
 
 #include "handle.h"
 
-static struct lhandle_store *GH = NULL;
+static struct leela_handle_store *GH = NULL;
 
 /**
  * @brief leela_handle_init,init the global handle_store
@@ -9,9 +9,9 @@ static struct lhandle_store *GH = NULL;
 void leela_handle_init()
 {
     g_assert(GH == NULL);
-    struct lhandle_store *h = g_malloc0(sizeof(*h));
+    struct leela_handle_store *h = g_malloc0(sizeof(*h));
     g_mutex_init(&h->mtx);
-    h->handleAry = g_array_new(FALSE,TRUE,sizeof(struct lhandle_name));
+    h->handleAry = g_array_new(FALSE,TRUE,sizeof(struct leela_handle_name));
 
     /**
      * must be null
@@ -30,14 +30,14 @@ void leela_handle_init()
 guint leela_handle_findname(const char *name)
 {
     g_assert(name != NULL);
-    struct lhandle_store *h = GH;
+    struct leela_handle_store *h = GH;
     guint ret = 0;
 
     g_mutex_lock(&h->mtx);
 
     for(int i=0;i< h->handleAry->len;i++)
     {
-        struct lhandle_name *ival = &g_array_index(h->handleAry,struct lhandle_name,i);
+        struct leela_handle_name *ival = &g_array_index(h->handleAry,struct leela_handle_name,i);
         if (g_str_equal(ival->name,name) == TRUE)
         {
             ret = ival->handle;
@@ -59,13 +59,13 @@ guint leela_handle_findname(const char *name)
 const char *leela_name_handle(guint handle,const char *name)
 {
     g_assert(name != NULL);
-    struct lhandle_store *h = GH;
+    struct leela_handle_store *h = GH;
 
     g_mutex_lock(&h->mtx);
 
     for(int i=0;i< h->handleAry->len;i++)
     {
-        struct lhandle_name *ival = &g_array_index(h->handleAry,struct lhandle_name,i);
+        struct leela_handle_name *ival = &g_array_index(h->handleAry,struct leela_handle_name,i);
         if (g_str_equal(&ival->name,name))
         {
             g_mutex_unlock(&h->mtx);
@@ -73,7 +73,7 @@ const char *leela_name_handle(guint handle,const char *name)
         }
     }
 
-    struct lhandle_name *newHandle = g_malloc0(sizeof(*newHandle));
+    struct leela_handle_name *newHandle = g_malloc0(sizeof(*newHandle));
     newHandle->handle = handle;
     newHandle->name = g_strdup(name);
     g_array_append_val(h->handleAry,*newHandle);
@@ -96,7 +96,7 @@ const char *leela_name_handle(guint handle,const char *name)
 guint leela_handle_register(struct leela_context *ctx)
 {
     g_assert(ctx);
-    struct lhandle_store *h = GH;
+    struct leela_handle_store *h = GH;
     g_mutex_lock(&h->mtx);
     h->ctxList = g_list_append(h->ctxList,ctx);
     guint handle = ++h->handleIdx;
@@ -130,7 +130,7 @@ guint leela_handle_register(struct leela_context *ctx)
 struct leela_context *
 leela_handle_grab(guint handle)
 {
-    struct lhandle_store *h = GH;
+    struct leela_handle_store *h = GH;
     struct leela_context *ret = NULL;
 
     g_mutex_lock(&h->mtx);
@@ -157,7 +157,7 @@ leela_handle_grab(guint handle)
 void leela_handle_retire(guint handle)
 {
     struct leela_context *ctx = leela_handle_grab(handle);
-    struct lhandle_store *h=GH;
+    struct leela_handle_store *h=GH;
     if (ctx)
     {
         g_mutex_lock(&GH->mtx);
@@ -165,7 +165,7 @@ void leela_handle_retire(guint handle)
 
         for(int i=0;i< h->handleAry->len;i++)
         {
-            struct lhandle_name *ival = &g_array_index(h->handleAry,struct lhandle_name,i);
+            struct leela_handle_name *ival = &g_array_index(h->handleAry,struct leela_handle_name,i);
             if (ival->handle == handle);
             {
                 g_array_remove_index(h->handleAry,i);
@@ -186,7 +186,7 @@ void leela_handle_retire(guint handle)
 
 void leela_handle_retire_all()
 {
-    struct lhandle_store *h=GH;
+    struct leela_handle_store *h=GH;
     if (h->ctxList != NULL)
     {
         g_mutex_lock(&h->mtx);
@@ -205,7 +205,7 @@ void leela_handle_retire_all()
         /// @brief free handle_name
         for(int i=0;i< h->handleAry->len;i++)
         {
-            struct lhandle_name *ival = &g_array_index(h->handleAry,struct lhandle_name,i);
+            struct leela_handle_name *ival = &g_array_index(h->handleAry,struct leela_handle_name,i);
             g_free(ival->name);
             ival->name = NULL;
         }

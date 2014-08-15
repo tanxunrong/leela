@@ -6,12 +6,12 @@
 #include "context.h"
 #include <glib.h>
 
-struct lhandle_name {
+struct leela_handle_name {
     guint handle; /** unique in global handle_store*/
     gchar *name;
 };
 
-struct lhandle_store {
+struct leela_handle_store {
     guint handleIdx;
     GList *ctxList;
     GMutex mtx;
