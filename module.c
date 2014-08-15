@@ -21,11 +21,13 @@ leela_open_so(const char *name)
     g_assert(sz != 0);
     g_free(path);
 
+    g_assert(g_module_supported());
+    GModule *module = NULL;
+
     if (div)
     {
         gchar **interator = div;
         gchar *realPath = NULL;
-        GModule *module;
 
         ///@brief search for the module
         while(*interator != NULL && module == NULL)
@@ -47,7 +49,7 @@ leela_open_so(const char *name)
                         memcpy(realPath+i+sz,path+i+1,strlen(path) - i - 1);
                     }
 
-                    module = g_module_open(realPath,G_MODULE_BIND_LAZY);
+                    module = g_module_open(realPath,G_MODULE_BIND_MASK);
                     if (module != NULL)
                     {
                         break;
@@ -71,7 +73,7 @@ leela_open_so(const char *name)
         return module;
     }
 
-    return NULL;
+    return module;
 }
 
 void leela_module_insert(struct leela_module *mod);
@@ -99,18 +101,19 @@ struct leela_module * leela_module_query(const char * name)
         module->name = module_name;
 
         gchar *createSymbol = g_strjoin(NULL,name,"_create");
-        gchar *initSymbol = g_strjoin(NULL,g_strdup(name),"_init");
-        gchar *releaseSymbol = g_strjoin(NULL,g_strdup(name),"_release");
-
-        if (!g_module_symbol(so,createSymbol,module->create))
+//        gchar *initSymbol = g_strjoin(NULL,g_strdup(name),"_init");
+//        gchar *releaseSymbol = g_strjoin(NULL,g_strdup(name),"_release");
+        gchar *initSymbol = "toy_init";
+        gchar *releaseSymbol = "toy_release";
+        if (!g_module_symbol(so,createSymbol,&module->create))
         {
             g_error("create symbol empty for module %s",module_name);
         }
-        if (!g_module_symbol(so,initSymbol,module->init))
+        if (!g_module_symbol(so,initSymbol,&module->init))
         {
             g_error("init symbol empty for module %s",module_name);
         }
-        if (!g_module_symbol(so,releaseSymbol,module->release))
+        if (!g_module_symbol(so,releaseSymbol,&module->release))
         {
             g_error("release symbol empty for module %s",module_name);
         }
