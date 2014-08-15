@@ -105,21 +105,21 @@ struct leela_module * leela_module_query(const char * name)
 //        gchar *releaseSymbol = g_strjoin(NULL,g_strdup(name),"_release");
         gchar *initSymbol = "toy_init";
         gchar *releaseSymbol = "toy_release";
-        if (!g_module_symbol(so,createSymbol,&module->create))
+        if (!g_module_symbol(so,createSymbol,(gpointer *)&module->create))
         {
             g_error("create symbol empty for module %s",module_name);
         }
-        if (!g_module_symbol(so,initSymbol,&module->init))
+        if (!g_module_symbol(so,initSymbol,(gpointer *)&module->init))
         {
             g_error("init symbol empty for module %s",module_name);
         }
-        if (!g_module_symbol(so,releaseSymbol,&module->release))
+        if (!g_module_symbol(so,releaseSymbol,(gpointer *)&module->release))
         {
             g_error("release symbol empty for module %s",module_name);
         }
         g_free(createSymbol);
-        g_free(initSymbol);
-        g_free(releaseSymbol);
+//        g_free(initSymbol);
+//        g_free(releaseSymbol);
 
         m->num++;
         module = module;
