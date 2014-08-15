@@ -21,3 +21,8 @@ gint leela_context_release(struct leela_context *ctx)
     }
     return -1;
 }
+
+struct leela_context *leela_context_new(const gchar *name,const gchar *param)
+{
+
+}
