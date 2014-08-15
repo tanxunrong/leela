@@ -11,7 +11,7 @@ struct leela_context {
     gint ref;
     guint32 handle;
     gint session_id;
-    struct lmsg_queue *queue;
+    struct leela_msg_queue *queue;
 };
 
 gint leela_context_release(struct leela_context *ctx);

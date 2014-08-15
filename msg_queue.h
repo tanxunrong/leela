@@ -3,34 +3,40 @@
 
 #include <glib.h>
 
-struct lmsg{
+struct leela_msg{
 	guint32 source;
 	gint session;
 	gpointer data;
 	gsize sz;
 };
-struct lmsg_queue;
+
+struct leela_msg_queue;
 
 void
-leela_globalmq_push(struct lmsg_queue *mq) ;
+leela_globalmq_push(struct leela_msg_queue *mq) ;
 
-struct lmsg_queue *
+struct leela_msg_queue *
 leela_globalmq_pop() ;
-struct lmsg_queue *
+
+struct leela_msg_queue *
 leela_mq_create(guint32 handle) ;
 
-void leela_mq_release(struct lmsg_queue *mq,GDestroyNotify shit) ;
+void
+leela_mq_release(struct leela_msg_queue *mq,GDestroyNotify shit) ;
+
 guint32
-leela_mq_handle(struct lmsg_queue *mq) ;
+leela_mq_handle(struct leela_msg_queue *mq) ;
 
 guint
-leela_mq_length(struct lmsg_queue *mq) ;
+leela_mq_length(struct leela_msg_queue *mq) ;
 
 gint
-leela_mq_pop(struct lmsg_queue *mq,struct lmsg *msg);
+leela_mq_pop(struct leela_msg_queue *mq,struct leela_msg *msg);
 
 gint
-leela_mq_push(struct lmsg_queue *mq,struct lmsg *msg);
+leela_mq_push(struct leela_msg_queue *mq,struct leela_msg *msg);
 
-void leela_mq_init();
+void
+leela_mq_init();
+
 #endif
