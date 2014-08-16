@@ -184,6 +184,9 @@ void leela_handle_retire(guint handle)
     }
 }
 
+/**
+ * @brief leela_handle_retire_all
+ */
 void leela_handle_retire_all()
 {
     struct leela_handle_store *h=GH;

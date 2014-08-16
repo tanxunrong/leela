@@ -6,6 +6,7 @@
 struct leela_msg{
 	guint32 source;
 	gint session;
+    gint type;
 	gpointer data;
 	gsize sz;
 };
