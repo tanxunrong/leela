@@ -20,12 +20,22 @@ struct leela_module {
     leela_dl_release release;
 };
 
-void leela_module_insert(struct leela_module *mod);
-struct leela_module * leela_module_query(const char * name);
-void * leela_module_instance_create(struct leela_module *);
-int leela_module_instance_init(struct leela_module *, void * inst, struct leela_context *ctx, const char * parm);
-void leela_module_instance_release(struct leela_module *, void *inst);
+void
+leela_module_insert(struct leela_module *mod);
 
-void leela_module_init(const char *path);
+struct leela_module *
+leela_module_query(const char * name);
+
+gpointer
+leela_module_instance_create(struct leela_module *);
+
+int
+leela_module_instance_init(struct leela_module *module, gpointer inst, struct leela_context *ctx, const gchar * parm);
+
+void
+leela_module_instance_release(struct leela_module *, void *inst);
+
+void
+leela_module_init(const char *path);
 
 #endif

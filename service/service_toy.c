@@ -55,7 +55,7 @@ struct toy {
 
 
 int
-toy_init(struct toy *mrb, struct leela_context *ctx, const char * args) {
+toy_init(struct toy *toy, struct leela_context *ctx, const char * args) {
     int sz = strlen(args);
     return 0;
 }
