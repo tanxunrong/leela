@@ -44,7 +44,9 @@ _init(struct toy *toy, struct leela_context *ctx, const char *msg, size_t sz) {
     g_assert(skynetClass != NULL);
     mrb_define_const(M,skynetClass,"@@CTX",snctx);
 
-    mrb_load_file(M,'./toy/loader.rb');
+    FILE *load_file = fopen("./toy/loader.rb","r");
+    g_assert(load_file);
+    mrb_load_file(M,load_file);
 
     return 0;
 }
