@@ -1,7 +1,8 @@
 
-#include "myc.h"
+#include "leela.h"
 #include "msg_queue.h"
 #include "handle.h"
+
 #include <mruby.h>
 #include <glib.h>
 

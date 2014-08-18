@@ -260,27 +260,6 @@ leela_command(struct leela_context * context, const char * cmd , const char * pa
     return NULL;
 }
 
-/**
- * @brief leela_monitor_new
- * @return
- */
-struct leela_monitor *leela_monitor_new()
-{
-    struct leela_monitor *ret = g_malloc0(sizeof(*ret));
-    return ret;
-}
-
-void leela_monitor_free(struct leela_monitor *m)
-{
-    g_free(m);
-}
-
-void leela_monitor_trigger(struct leela_monitor *moniter,guint src,guint dest)
-{
-    moniter->dest = dest;
-    moniter->src = src;
-    g_atomic_int_inc(&moniter->version);
-}
 
 /**
  * @brief leela_context_callback
@@ -579,6 +558,44 @@ leela_send(struct leela_context * context, guint source, guint destination , gin
         return -1;
     }
     return session;
+}
+
+gint
+leela_sendname(struct leela_context * ctx, const char * addr , int type, int session, gpointer msg, gsize sz)
+{
+    guint source = ctx->handle;
+    guint des = 0;
+
+    if (addr[0] == ':')
+    {
+        des = strtoul(addr+1,NULL,16);
+    }
+    else if (addr[0] == '.')
+    {
+        des = leela_handle_findname(addr+1);
+        if (des == 0)
+        {
+            if (type & PTYPE_TAG_DONTCOPY)
+            {
+                g_free(msg);
+            }
+            return session;
+        }
+    }
+
+    return leela_send(ctx,source,des,type,session,msg,sz);
+}
+
+void
+leela_context_endless(guint32 handle)
+{
+    struct leela_context *ctx = leela_handle_grab(handle);
+    if (ctx == NULL)
+    {
+        return;
+    }
+    ctx->endless = TRUE;
+    leela_context_release(ctx);
 }
 
 /**

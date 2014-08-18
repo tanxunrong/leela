@@ -25,6 +25,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#include "../leela.h"
 #include "../context.h"
 
 struct toy {
@@ -47,14 +48,14 @@ _init(struct toy *toy, struct leela_context *ctx, const char *msg, size_t sz) {
 }
 
 static int
-_launch(struct skynet_context * context, void *ud, int type, int session, uint32_t source , const void * msg, size_t sz) {
+_launch(struct leela_context * context, void *ud, int type, int session, guint source , const gpointer msg, gsize sz) {
     g_assert(type == 0 && session == 0);
     struct toy *toy = ud;
     leela_context_callback(context, NULL, NULL);
 
     int err = _init(toy, context, msg, sz);
     if (err) {
-        skynet_command(context, "EXIT", NULL);
+        leela_command(context, "EXIT", NULL);
     }
 
     return 0;
