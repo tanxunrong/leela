@@ -119,6 +119,10 @@ leela_mq_push(struct leela_msg_queue *mq,struct leela_msg *msg)
     g_assert(mq);
     g_mutex_lock(&mq->mtx);
     g_queue_push_tail(mq->queue,msg);
+    if (!msg->in_global)
+    {
+        leela_globalmq_push(mq);
+    }
     g_mutex_unlock(&mq->mtx);
     return 0;
 }

@@ -324,6 +324,7 @@ struct leela_context * leela_context_new(const char * name, const char * param)
     ctx->userdata = NULL;
     ctx->session_id = 0;
     ctx->init = FALSE;
+    ctx->endless = FALSE;
     ctx->handle = leela_handle_register(ctx);
 
     struct leela_msg_queue *mq = ctx->queue = leela_mq_create(ctx->handle);
@@ -535,11 +536,24 @@ void leela_context_dispatch_all(struct leela_context * ctx)
 }
 
 gint
-leela_send(struct leela_context * context, guint source, guint destination , gint type, gint session, gpointer data, gsize sz)
+leela_send(struct leela_context * ctx, guint source, guint destination , gint type, gint session, gpointer data, gsize sz)
 {
+    if (type & PTYPE_TAG_ALLOCSESSION)
+    {
+        g_assert(ctx->session_id == 0);
+        session = leela_context_newsession(ctx);
+    }
+
+    if (!(type & PTYPE_TAG_DONTCOPY))
+    {
+        gpointer *copy = g_malloc0(sz);
+        memcpy(copy,data,sz);
+        data = copy;
+    }
+
     if (source == 0)
     {
-        source = context->handle;
+        source = ctx->handle;
     }
 
     if (destination == 0)

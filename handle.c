@@ -141,6 +141,7 @@ leela_handle_grab(guint handle)
         if (ctx->handle == handle)
         {
             ret = ctx;
+            leela_context_grab(ret);
             break;
         }
         ll = g_list_next(h->ctxList);

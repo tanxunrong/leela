@@ -4,6 +4,7 @@
 #include <glib.h>
 
 struct leela_msg{
+    gboolean in_global;
 	guint32 source;
 	gint session;
     gint type;

@@ -17,6 +17,11 @@ _monitor(void *p) {
     int i;
     int n = monitor->count;
     for (;;) {
+        if (context_num_get() == 0)
+        {
+            break;
+        }
+
         for (i=0;i<n;i++) {
             leela_monitor_check(monitor->m[i]);
         }
@@ -52,8 +57,8 @@ _worker(void *param)
     return NULL;
 }
 
-static void
-_start(guint thread_num)
+void
+_start_worker(guint thread_num)
 {
 #define LEELA_EXTRA_THREADNUM 1
     GThread *all_threads[thread_num+LEELA_EXTRA_THREADNUM];

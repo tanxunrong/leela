@@ -22,7 +22,7 @@ struct worker_parm {
     int weight;
 };
 
-static void
-_start(guint worker_num);
+void
+_start_worker(guint worker_num);
 
 #endif
