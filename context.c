@@ -479,8 +479,8 @@ leela_context_msg_dispatch(struct leela_monitor *moniter, struct leela_msg_queue
         return leela_globalmq_pop();
     }
 
-    gint i,n = 0;
-    struct leela_msg *msg;
+    gint i,n = 1;
+    struct leela_msg *msg = NULL;
     for(i=0;i<n;i++)
     {
         if (leela_mq_pop(mq,msg))
@@ -499,7 +499,6 @@ leela_context_msg_dispatch(struct leela_monitor *moniter, struct leela_msg_queue
         if (ctx->callback == NULL)
         {
             g_free(msg->data);
-            g_free(msg);
         }
         else
         {

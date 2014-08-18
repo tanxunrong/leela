@@ -12,6 +12,29 @@ free_monitor(struct monitor *m)
 }
 
 static void *
+_timer(void *p)
+{
+    struct monitor *m = p;
+    while(1)
+    {
+        if (context_num_get() == 0)
+        {
+            break;
+        }
+
+        if (m->sleep >= 1)
+        {
+            g_cond_signal(&m->cond);
+        }
+
+        usleep(50000);
+    }
+
+    g_cond_broadcast(&m->cond);
+    return NULL;
+}
+
+static void *
 _monitor(void *p) {
     struct monitor * monitor = p;
     int i;
@@ -60,7 +83,7 @@ _worker(void *param)
 void
 _start_worker(guint thread_num)
 {
-#define LEELA_EXTRA_THREADNUM 1
+#define LEELA_EXTRA_THREADNUM 2
     GThread *all_threads[thread_num+LEELA_EXTRA_THREADNUM];
 
     struct monitor *m = g_malloc0(sizeof(*m));
@@ -77,6 +100,7 @@ _start_worker(guint thread_num)
     }
 
     all_threads[0] = g_thread_new("monitor",_monitor,m);
+    all_threads[1] = g_thread_new("timer",_timer,m);
 
     static int weight[] = {
         -1, -1, -1, -1, 0, 0, 0, 0,

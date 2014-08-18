@@ -104,11 +104,13 @@ leela_mq_pop(struct leela_msg_queue *mq,struct leela_msg *msg)
     gint ret = 1;
     g_mutex_lock(&mq->mtx);
 
-    msg = (struct leela_msg *)g_queue_pop_head(mq->queue);
-    if (msg != NULL)
+    int length = g_queue_get_length(mq->queue);
+    if (length)
     {
+        msg = (struct leela_msg *)g_queue_pop_head(mq->queue);
         ret = 0;
     }
+
     g_mutex_unlock(&mq->mtx);
     return ret;
 }
