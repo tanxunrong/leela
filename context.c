@@ -328,7 +328,7 @@ struct leela_context * leela_context_new(const char * name, const char * param)
 
     struct leela_msg_queue *mq = ctx->queue = leela_mq_create(ctx->handle);
 
-    ///@todo add global ctx num
+    context_num_add();
 
     gint init_ok = leela_module_instance_init(module,inst,ctx,param);
     if (init_ok == 0)

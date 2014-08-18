@@ -40,9 +40,11 @@ _init(struct toy *toy, struct leela_context *ctx, const char *msg, size_t sz) {
     toy->ctx = ctx;
 
     mrb_value snctx = mrb_cptr_value(M,toy->ctx);
-    struct RClass *skynetClass = mrb_class_get(M,"Skynet");
+    struct RClass *skynetClass = mrb_class_get(M,"Leela");
     g_assert(skynetClass != NULL);
     mrb_define_const(M,skynetClass,"@@CTX",snctx);
+
+    mrb_load_file(M,'./toy/loader.rb');
 
     return 0;
 }
