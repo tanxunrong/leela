@@ -5,10 +5,6 @@ cmake_minimum_required(VERSION 2.8)
 add_definitions( -Wall -std=c99 -g )
 
 set(HEADERS msg_queue.h handle.h context.h module.h leela.h monitor.h start.h)
-#add_executable(time_client time_client.c ${HEADERS})
-#add_executable(time_server time_server.c ${HEADERS})
-#add_executable(echo_client echo_client.c ${HEADERS})
-#add_executable(echo_server echo_server.c ${HEADERS})
 add_executable(leela leela.c msg_queue.c handle.c context.c module.c monitor.c start.c ${HEADERS})
 
 add_library(mruby STATIC IMPORTED)

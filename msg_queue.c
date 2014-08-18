@@ -107,7 +107,7 @@ leela_mq_pop(struct leela_msg_queue *mq,struct leela_msg *msg)
     int length = g_queue_get_length(mq->queue);
     if (length)
     {
-        msg = (struct leela_msg *)g_queue_pop_head(mq->queue);
+        msg = g_queue_pop_head(mq->queue);
         ret = 0;
     }
 

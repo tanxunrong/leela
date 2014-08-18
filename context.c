@@ -410,7 +410,7 @@ gint leela_context_push(guint32 handle, struct leela_msg *message)
     struct leela_context *ctx = leela_handle_grab(handle);
     if (ctx == NULL)
     {
-        return 1;
+        return -1;
     }
     leela_mq_push(ctx->queue,message);
     leela_context_release(ctx);
@@ -481,6 +481,8 @@ leela_context_msg_dispatch(struct leela_monitor *moniter, struct leela_msg_queue
 
     gint i,n = 1;
     struct leela_msg *msg = NULL;
+    struct leela_msg **mstaddr = &msg;
+    g_assert(mstaddr);
     for(i=0;i<n;i++)
     {
         if (leela_mq_pop(mq,msg))
@@ -488,23 +490,27 @@ leela_context_msg_dispatch(struct leela_monitor *moniter, struct leela_msg_queue
             leela_context_release(ctx);
             return leela_globalmq_pop();
         }
-        else if(i=0 && weight >=0)
+        else if(i==0 && weight >=0)
         {
             n = leela_mq_length(mq);
             n >>= weight;
         }
 
-        leela_monitor_trigger(moniter,msg->source,handle);
-
-        if (ctx->callback == NULL)
+        leela_monitor_trigger(moniter,(msg ? msg->source : 0),handle);
+        if (msg)
         {
-            g_free(msg->data);
-        }
-        else
-        {
-            _dispatch_msg(ctx,msg);
-        }
+            if (ctx->callback == NULL)
+            {
 
+                g_free(msg->data);
+                g_free(msg);
+
+            }
+            else
+            {
+                _dispatch_msg(ctx,msg);
+            }
+        }
         leela_monitor_trigger(moniter,0,0);
     }
 
@@ -545,8 +551,9 @@ leela_send(struct leela_context * ctx, guint source, guint destination , gint ty
 
     if (!(type & PTYPE_TAG_DONTCOPY))
     {
-        gpointer *copy = g_malloc0(sz);
+        gchar *copy = g_malloc0(sz+1);
         memcpy(copy,data,sz);
+        memset(copy+sz,'\0',1);
         data = copy;
     }
 

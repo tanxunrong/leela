@@ -17,7 +17,7 @@ int main(int argc,char *argv[])
     struct leela_context *ctx = leela_context_new("toy","load");
     g_assert(ctx);
 
-    _start_worker(4);
+    _start_worker(1);
 
     return 0;
 }

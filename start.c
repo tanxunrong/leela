@@ -17,7 +17,7 @@ _timer(void *p)
     struct monitor *m = p;
     while(1)
     {
-        if (context_num_get() == 0)
+        if (context_num_get() < 0)
         {
             break;
         }
