@@ -71,7 +71,14 @@ void leela_mq_release(struct leela_msg_queue *mq,GDestroyNotify shit)
     if (mq != NULL)
     {
         g_mutex_clear(&mq->mtx);
-        g_queue_free_full(mq->queue,leela_msg_free);
+        if (shit == NULL)
+        {
+            g_queue_free_full(mq->queue,leela_msg_free);
+        }
+        else
+        {
+            g_queue_free_full(mq->queue,shit);
+        }
         g_free(mq);
     }
 }

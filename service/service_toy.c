@@ -33,30 +33,42 @@ struct toy {
 };
 
 
-//static int
-//_init(struct toy *mrb, struct skynet_context *ctx, const char * args, size_t sz) {
-//    mrb_state *M = mrb->mrb;
-//    mrb->ctx = ctx;
-//    return 0;
-//}
+static int
+_init(struct toy *toy, struct leela_context *ctx, const char *msg, size_t sz) {
+    mrb_state *M = toy->mrb;
+    toy->ctx = ctx;
 
-//static int
-//_launch(struct skynet_context * context, void *ud, int type, int session, uint32_t source , const void * msg, size_t sz) {
-//    assert(type == 0 && session == 0);
-//    struct toy *mrb = ud;
-//    skynet_callback(context, NULL, NULL);
-//    int err = _init(mrb, context, msg, sz);
-//    if (err) {
-//        skynet_command(context, "EXIT", NULL);
-//    }
+    mrb_value snctx = mrb_cptr_value(M,toy->ctx);
+    struct RClass *skynetClass = mrb_class_get(M,"Skynet");
+    g_assert(skynetClass != NULL);
+    mrb_define_const(M,skynetClass,"@@CTX",snctx);
 
-//    return 0;
-//}
+    return 0;
+}
+
+static int
+_launch(struct skynet_context * context, void *ud, int type, int session, uint32_t source , const void * msg, size_t sz) {
+    g_assert(type == 0 && session == 0);
+    struct toy *toy = ud;
+    leela_context_callback(context, NULL, NULL);
+
+    int err = _init(toy, context, msg, sz);
+    if (err) {
+        skynet_command(context, "EXIT", NULL);
+    }
+
+    return 0;
+}
 
 
 int
 toy_init(struct toy *toy, struct leela_context *ctx, const char * args) {
     int sz = strlen(args);
+    gchar *tmp = g_strdup(args);
+    leela_context_callback(ctx,toy,_launch);
+    const gchar *self = leela_command(ctx,"REG",NULL);
+    guint handle_id = strtoul(self+1,NULL,16);
+    leela_send(ctx,0,handle_id,PTYPE_TAG_DONTCOPY,0,tmp,sz);
     return 0;
 }
 
