@@ -1,18 +1,7 @@
 
 #include "msg_queue.h"
 
-struct leela_msg_queue {
-	guint32 handle;
-	GMutex mtx;
-	GQueue *queue;
-    struct leela_msg_queue *next;
-};
 
-struct leela_global_queue {
-    // queue of lmsg_queue
-    GQueue *qqueue;
-    GMutex mtx;
-};
 
 static struct leela_global_queue *GQ = NULL;
 
@@ -107,6 +96,8 @@ leela_mq_pop(struct leela_msg_queue *mq,struct leela_msg *msg)
     int length = g_queue_get_length(mq->queue);
     if (length)
     {
+//        gpointer oldMsg = g_queue_pop_head(mq->queue);
+//        memcpy(msg,oldMsg,sizeof(struct leela_msg));
         msg = g_queue_pop_head(mq->queue);
         ret = 0;
     }
@@ -121,10 +112,11 @@ leela_mq_push(struct leela_msg_queue *mq,struct leela_msg *msg)
     g_assert(mq);
     g_mutex_lock(&mq->mtx);
     g_queue_push_tail(mq->queue,msg);
-    if (!msg->in_global)
+    g_mutex_unlock(&mq->mtx);
+
+    if (!mq->in_global)
     {
         leela_globalmq_push(mq);
     }
-    g_mutex_unlock(&mq->mtx);
     return 0;
 }

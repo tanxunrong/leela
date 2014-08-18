@@ -434,7 +434,7 @@ void leela_context_send
     msg.sz = sz;
     msg.session = session;
     msg.source = source;
-    msg.type = type;
+
 
     leela_mq_push(ctx->queue,&msg);
 }
@@ -443,8 +443,10 @@ static void
 _dispatch_msg(struct leela_context *ctx,struct leela_msg *msg)
 {
     g_assert(ctx->init);
-
-    if (!ctx->callback(ctx,ctx->userdata,msg->type,msg->session,msg->source,msg,msg->sz))
+#define HANDLE_REMOTE_SHIFT 24
+    int type = msg->sz >> HANDLE_REMOTE_SHIFT;
+    gsize sz = msg->sz & 0xFFFFFF;
+    if (!ctx->callback(ctx,ctx->userdata,type,msg->session,msg->source,msg->data,sz))
     {
         g_free(msg->data);
         g_free(msg);
@@ -480,9 +482,8 @@ leela_context_msg_dispatch(struct leela_monitor *moniter, struct leela_msg_queue
     }
 
     gint i,n = 1;
-    struct leela_msg *msg = NULL;
-    struct leela_msg **mstaddr = &msg;
-    g_assert(mstaddr);
+    struct leela_msg *msg = g_malloc0(sizeof(*msg));
+
     for(i=0;i<n;i++)
     {
         if (leela_mq_pop(mq,msg))
@@ -501,10 +502,7 @@ leela_context_msg_dispatch(struct leela_monitor *moniter, struct leela_msg_queue
         {
             if (ctx->callback == NULL)
             {
-
                 g_free(msg->data);
-                g_free(msg);
-
             }
             else
             {

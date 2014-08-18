@@ -2,17 +2,28 @@
 #define LEELA_MSG_QUEUE_H
 
 #include <glib.h>
+#include <string.h>
 
 struct leela_msg{
-    gboolean in_global;
 	guint32 source;
 	gint session;
-    gint type;
 	gpointer data;
 	gsize sz;
 };
 
-struct leela_msg_queue;
+struct leela_msg_queue {
+    gboolean in_global;
+    guint32 handle;
+    GMutex mtx;
+    GQueue *queue;
+    struct leela_msg_queue *next;
+};
+
+struct leela_global_queue {
+    // queue of lmsg_queue
+    GQueue *qqueue;
+    GMutex mtx;
+};
 
 void
 leela_globalmq_push(struct leela_msg_queue *mq) ;
