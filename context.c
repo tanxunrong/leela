@@ -71,17 +71,17 @@ cmd_reg(struct leela_context * context, const char * param) {
     }
 }
 
-//static const char *
-//cmd_query(struct leela_context * context, const char * param) {
-//    if (param[0] == '.') {
-//        uint32_t handle = leela_handle_findname(param+1);
-//        if (handle) {
-//            sprintf(context->result, ":%x", handle);
-//            return context->result;
-//        }
-//    }
-//    return NULL;
-//}
+static const char *
+cmd_query(struct leela_context * context, const char * param) {
+    if (param && param[0] == '.') {
+        guint handle = leela_handle_findname(param+1);
+        if (handle) {
+            sprintf(context->result, ":%x", handle);
+            return context->result;
+        }
+    }
+    return NULL;
+}
 
 //static const char *
 //cmd_name(struct leela_context * context, const char * param) {
@@ -191,11 +191,11 @@ cmd_exit(struct leela_context * context, const char * param) {
 //    return NULL;
 //}
 
-//static const char *
-//cmd_abort(struct leela_context * context, const char * param) {
-//    leela_handle_retireall();
-//    return NULL;
-//}
+static const char *
+cmd_abort(struct leela_context * context, const char * param) {
+    leela_handle_retire_all();
+    return NULL;
+}
 
 //static const char *
 //cmd_monitor(struct leela_context * context, const char * param) {
@@ -231,7 +231,7 @@ cmd_exit(struct leela_context * context, const char * param) {
 static struct command_func cmd_funcs[] = {
 //    { "TIMEOUT", cmd_timeout },
     { "REG", cmd_reg },
-//    { "QUERY", cmd_query },
+    { "QUERY", cmd_query },
 //    { "NAME", cmd_name },
 //    { "NOW", cmd_now },
     { "EXIT", cmd_exit },
@@ -241,7 +241,7 @@ static struct command_func cmd_funcs[] = {
 //    { "SETENV", cmd_setenv },
 //    { "STARTTIME", cmd_starttime },
 //    { "ENDLESS", cmd_endless },
-//    { "ABORT", cmd_abort },
+    { "ABORT", cmd_abort },
 //    { "MONITOR", cmd_monitor },
 //    { "MQLEN", cmd_mqlen },
     { NULL, NULL },
@@ -482,11 +482,11 @@ leela_context_msg_dispatch(struct leela_monitor *moniter, struct leela_msg_queue
     }
 
     gint i,n = 1;
-    struct leela_msg *msg = g_malloc0(sizeof(*msg));
+    struct leela_msg *msg = NULL;
 
     for(i=0;i<n;i++)
     {
-        if (leela_mq_pop(mq,msg))
+        if (leela_mq_pop(mq,&msg))
         {
             leela_context_release(ctx);
             return leela_globalmq_pop();
@@ -532,7 +532,7 @@ void leela_context_dispatch_all(struct leela_context * ctx)
 {
     struct leela_msg *msg = NULL;
     struct leela_msg_queue *mq = ctx->queue;
-    if (!leela_mq_pop(mq,msg))
+    if (!leela_mq_pop(mq,&msg))
     {
         _dispatch_msg(ctx,msg);
     }

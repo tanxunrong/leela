@@ -44,6 +44,8 @@ leela_mq_create(guint32 handle)
 	mq->handle = handle;
 	mq->queue = g_queue_new();
 	mq->next = NULL;
+    /// set true to avoid push to global mq
+    mq->in_global = TRUE;
 	g_mutex_init(&mq->mtx);
 	return mq;
 }
@@ -88,7 +90,7 @@ leela_mq_length(struct leela_msg_queue *mq)
 }
 
 gint
-leela_mq_pop(struct leela_msg_queue *mq,struct leela_msg *msg)
+leela_mq_pop(struct leela_msg_queue *mq,struct leela_msg **msg)
 {
     gint ret = 1;
     g_mutex_lock(&mq->mtx);
@@ -98,7 +100,7 @@ leela_mq_pop(struct leela_msg_queue *mq,struct leela_msg *msg)
     {
 //        gpointer oldMsg = g_queue_pop_head(mq->queue);
 //        memcpy(msg,oldMsg,sizeof(struct leela_msg));
-        msg = g_queue_pop_head(mq->queue);
+        *msg = g_queue_pop_head(mq->queue);
         ret = 0;
     }
 

@@ -44,7 +44,7 @@ guint
 leela_mq_length(struct leela_msg_queue *mq) ;
 
 gint
-leela_mq_pop(struct leela_msg_queue *mq,struct leela_msg *msg);
+leela_mq_pop(struct leela_msg_queue *mq,struct leela_msg **msg);
 
 gint
 leela_mq_push(struct leela_msg_queue *mq,struct leela_msg *msg);
