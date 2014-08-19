@@ -4,7 +4,6 @@ begin
 	Leela.callback()
 
 	class Leela
-		attr_reader :CTX
 		def self.putCtx
 			puts @@CTX
 		end

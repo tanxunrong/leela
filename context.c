@@ -342,13 +342,13 @@ struct leela_context * leela_context_new(const char * name, const char * param)
         leela_globalmq_push(mq);
         if (ret)
         {
-            g_print("launch %s %s",name,param);
+            g_print("launch %s %s\n",name,param);
         }
         return ret;
     }
     else
     {
-        g_error("failed launch %s",name);
+        g_error("failed launch %s\n",name);
         guint32 handle = ctx->handle;
         leela_handle_retire(handle);
         leela_context_release(ctx);
