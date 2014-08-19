@@ -14,6 +14,9 @@ int main(int argc,char *argv[])
     leela_handle_init();
     leela_module_init("/home/tanxr/workspace/unp_mystudy-build/lib?.so");
 
+    struct leela_context *logger = leela_context_new("logger","/tmp/leela.log");
+    g_assert(logger);
+
     struct leela_context *ctx = leela_context_new("toy","load");
     g_assert(ctx);
 

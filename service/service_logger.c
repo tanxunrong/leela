@@ -1,8 +1,7 @@
-#include "skynet.h"
+#include "../leela.h"
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdint.h>
 
 struct logger {
 	FILE * handle;
@@ -11,7 +10,7 @@ struct logger {
 
 struct logger *
 logger_create(void) {
-	struct logger * inst = skynet_malloc(sizeof(*inst));
+    struct logger * inst = g_malloc0(sizeof(*inst));
 	inst->handle = NULL;
 	inst->close = 0;
 	return inst;
@@ -22,11 +21,11 @@ logger_release(struct logger * inst) {
 	if (inst->close) {
 		fclose(inst->handle);
 	}
-	skynet_free(inst);
+    g_free(inst);
 }
 
 static int
-_logger(struct skynet_context * context, void *ud, int type, int session, uint32_t source, const void * msg, size_t sz) {
+_logger(struct leela_context * context, gpointer ud, int type, int session,guint32 source, const gpointer msg, gsize sz) {
 	struct logger * inst = ud;
 	fprintf(inst->handle, "[:%08x] ",source);
 	fwrite(msg, sz , 1, inst->handle);
@@ -37,7 +36,7 @@ _logger(struct skynet_context * context, void *ud, int type, int session, uint32
 }
 
 int
-logger_init(struct logger * inst, struct skynet_context *ctx, const char * parm) {
+logger_init(struct logger * inst, struct leela_context *ctx, const char * parm) {
 	if (parm) {
 		inst->handle = fopen(parm,"w");
 		if (inst->handle == NULL) {
@@ -48,8 +47,8 @@ logger_init(struct logger * inst, struct skynet_context *ctx, const char * parm)
 		inst->handle = stdout;
 	}
 	if (inst->handle) {
-		skynet_callback(ctx, inst, _logger);
-		skynet_command(ctx, "REG", ".logger");
+        leela_context_callback(ctx, inst, _logger);
+		leela_command(ctx, "REG", ".logger");
 		return 0;
 	}
 	return 1;
