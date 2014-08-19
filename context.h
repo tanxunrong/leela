@@ -24,6 +24,7 @@ struct leela_context {
     gint session_id;
     gboolean init;
     gboolean endless;
+    gint calling;
 };
 
 struct leela_context * leela_context_new(const char * name, const char * param);

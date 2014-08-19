@@ -443,6 +443,7 @@ static void
 _dispatch_msg(struct leela_context *ctx,struct leela_msg *msg)
 {
     g_assert(ctx->init);
+    g_atomic_int_compare_and_exchange(&ctx->calling,0,1);
     int type = msg->sz >> HANDLE_REMOTE_SHIFT;
     gsize sz = msg->sz & 0xFFFFFF;
     if (!ctx->callback(ctx,ctx->userdata,type,msg->session,msg->source,msg->data,sz))
@@ -450,6 +451,7 @@ _dispatch_msg(struct leela_context *ctx,struct leela_msg *msg)
         g_free(msg->data);
         g_free(msg);
     }
+    g_atomic_int_set(&ctx->calling,0);
 }
 
 
