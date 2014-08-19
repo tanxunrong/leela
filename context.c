@@ -342,13 +342,13 @@ struct leela_context * leela_context_new(const char * name, const char * param)
         leela_globalmq_push(mq);
         if (ret)
         {
-            g_print("launch %s %s\n",name,param);
+            leela_error(ret,"launch %s %s",name,param);
         }
         return ret;
     }
     else
     {
-        g_error("failed launch %s\n",name);
+        leela_error(NULL,"failed launch %s",name);
         guint32 handle = ctx->handle;
         leela_handle_retire(handle);
         leela_context_release(ctx);
@@ -443,7 +443,6 @@ static void
 _dispatch_msg(struct leela_context *ctx,struct leela_msg *msg)
 {
     g_assert(ctx->init);
-#define HANDLE_REMOTE_SHIFT 24
     int type = msg->sz >> HANDLE_REMOTE_SHIFT;
     gsize sz = msg->sz & 0xFFFFFF;
     if (!ctx->callback(ctx,ctx->userdata,type,msg->session,msg->source,msg->data,sz))
@@ -624,3 +623,5 @@ void leela_globalinit()
     G_NODE.count = 0;
     G_NODE.init = 1;
 }
+
+

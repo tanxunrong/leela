@@ -11,9 +11,9 @@
 #define PTYPE_SYSTEM 4
 #define PTYPE_HARBOR 5
 #define PTYPE_SOCKET 6
-// read lualib/skynet.lua examples/simplemonitor.lua
+// read lualib/leela.lua examples/simplemonitor.lua
 #define PTYPE_ERROR 7
-// read lualib/skynet.lua lualib/mqueue.lua lualib/snax.lua
+// read lualib/leela.lua lualib/mqueue.lua lualib/snax.lua
 #define PTYPE_RESERVED_QUEUE 8
 #define PTYPE_RESERVED_DEBUG 9
 #define PTYPE_RESERVED_LUA 10
@@ -21,6 +21,8 @@
 
 #define PTYPE_TAG_DONTCOPY 0x10000
 #define PTYPE_TAG_ALLOCSESSION 0x20000
+
+#define HANDLE_REMOTE_SHIFT 24
 
 struct leela_context;
 
@@ -38,5 +40,8 @@ leela_context_callback(struct leela_context *ctx,gpointer userdata,leela_callbac
 
 gint
 leela_sendname(struct leela_context * context, const char * destination , int type, int session, gpointer msg, gsize sz);
+
+void
+leela_error(struct leela_context * context, const char *msg, ...);
 
 #endif

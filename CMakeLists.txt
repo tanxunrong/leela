@@ -5,7 +5,7 @@ cmake_minimum_required(VERSION 2.8)
 add_definitions( -Wall -std=c99 -g )
 
 set(HEADERS msg_queue.h handle.h context.h module.h leela.h monitor.h start.h)
-add_executable(leela leela.c msg_queue.c handle.c context.c module.c monitor.c start.c ${HEADERS})
+add_executable(leela leela.c msg_queue.c error.c handle.c context.c module.c monitor.c start.c ${HEADERS})
 
 add_library(mruby STATIC IMPORTED)
 set_target_properties(mruby PROPERTIES IMPORTED_LOCATION ${PROJECT_SOURCE_DIR}/mruby/build/host/lib/libmruby.a )
